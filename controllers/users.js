@@ -8,41 +8,23 @@ const NotFoundError = require('../utils/errors/NotFoundError');
 
 const { NODE_ENV, JWT_SECRET = 'JWT_SECRET' } = process.env;
 
-const getUsers = (req, res, next) => {
-  User.find({})
-    .then((users) => res.status(STATUS_CODES.OK).send(users))
-    .catch(next);
-};
-
 const createUser = (req, res, next) => {
-  const {
-    name,
-    about,
-    avatar,
-    email,
-    password,
-  } = req.body;
+  const { name, email, password } = req.body;
   bcrypt
     .hash(password, 10)
     .then((hash) => User.create({
       name,
-      about,
-      avatar,
       email,
       password: hash,
     }))
-    .then(() => res.status(STATUS_CODES.CREATED)
+    .then((user) => res.status(STATUS_CODES.CREATED)
       .send(
         {
-          data: {
-            name,
-            about,
-            avatar,
-            email,
-          },
+          _id: user._id,
+          name: user.name,
+          email: user.email,
         },
       ))
-    // данные не записались, вернём ошибку
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError('Введены некорректные данные'));
@@ -54,54 +36,10 @@ const createUser = (req, res, next) => {
     });
 };
 
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-
-  User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
-      return res.send({ token });
-    })
-    .catch((next));
-};
-
-const findCurrentUser = (req, res, next) => {
-  User.findById(req.user._id)
-    .then((user) => {
-      if (user) {
-        res.status(STATUS_CODES.OK).send(user);
-      } else {
-        next(new NotFoundError('Пользователь не найден'));
-      }
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Введены некорректные данные поиска'));
-      }
-      return next(err);
-    });
-};
-
-const getUserById = (req, res, next) => {
-  User.findById(req.params.userId)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Пользователь не найден');
-      }
-      res.status(STATUS_CODES.OK).send(user);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Введены некорректные данные поиска'));
-      }
-      return next(err);
-    });
-};
-
 const updateUserProfile = (req, res, next) => {
-  const { name, about } = req.body;
+  const { email, name } = req.body;
 
-  return User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
@@ -116,30 +54,37 @@ const updateUserProfile = (req, res, next) => {
     });
 };
 
-const updateUserAvatar = (req, res, next) => {
-  const { avatar } = req.body;
-
-  return User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+const findCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Пользователь не найден');
+      if (user) {
+        res.status(STATUS_CODES.OK).send({ email: user.email, name: user.name });
+      } else {
+        next(new NotFoundError('Пользователь не найден'));
       }
-      res.status(STATUS_CODES.OK).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Введены некорректные данные при обновлении аватара'));
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Введены некорректные данные поиска'));
       }
       return next(err);
     });
 };
 
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((next));
+};
+
 module.exports = {
-  getUsers,
   createUser,
-  login,
-  findCurrentUser,
-  getUserById,
   updateUserProfile,
-  updateUserAvatar,
+  findCurrentUser,
+  login,
 };
