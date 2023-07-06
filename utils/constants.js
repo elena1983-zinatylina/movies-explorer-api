@@ -8,7 +8,7 @@ const STATUS_CODES = {
     CONFLICT: 409,
   };
   
-  const MONGO_URL = 'mongodb://127.0.0.1:27017/bitfilmsdb';
+  const MONGO_URL = 'mongodb://127.0.0.1:27017/moviesdb';
   
   const regexLink = /^https?:\/\/(www\.)?[a-zA-Z\0-9]+\.[\w\-._~:/?#[\]@!$&'()*+,;=]{2,}#?$/;
   
