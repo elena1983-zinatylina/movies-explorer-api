@@ -36,7 +36,7 @@ const createUser = (req, res, next) => {
     });
 };
 
-const updateUserProfile = (req, res, next) => {
+const updateUserInfo = (req, res, next) => {
   const { email, name } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
@@ -54,7 +54,7 @@ const updateUserProfile = (req, res, next) => {
     });
 };
 
-const findCurrentUser = (req, res, next) => {
+const getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (user) {
@@ -84,7 +84,7 @@ const login = (req, res, next) => {
 
 module.exports = {
   createUser,
-  updateUserProfile,
-  findCurrentUser,
+  updateUserInfo,
+  getUserInfo,
   login,
 };
