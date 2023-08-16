@@ -55,7 +55,8 @@ const updateUserInfo = (req, res, next) => {
 };
 
 const getUserInfo = (req, res, next) => {
-  User.findById(req.user._id)
+  const  _id  = req.user;
+  User.findById(_id)
     .then((user) => {
       if (user) {
         res.status(STATUS_CODES.OK).send({ email: user.email, name: user.name });
