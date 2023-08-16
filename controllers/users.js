@@ -38,8 +38,8 @@ const createUser = (req, res, next) => {
 
 const updateUserInfo = (req, res, next) => {
   const { email, name } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
+  const { _id } = req.user;
+  User.findByIdAndUpdate({ _id }, { $set: { name, email } }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
